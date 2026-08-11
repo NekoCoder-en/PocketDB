@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 interface LogEntry {
   id: string;
