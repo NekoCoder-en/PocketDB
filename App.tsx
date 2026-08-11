@@ -115,7 +115,10 @@ export default function App() {
           const dbNameMatch = sql.match(/CREATE\s+DATABASE\s+([a-zA-Z0-9_]+)/i);
           if (dbNameMatch && dbNameMatch[1]) {
             const dbName = `${dbNameMatch[1]}.db`;
-            dbsRef.current[dbName] = await SQLite.openDatabaseAsync(dbName);
+            const newDb = await SQLite.openDatabaseAsync(dbName);
+            dbsRef.current[dbName] = newDb;
+            // Forzar creación en disco
+            await newDb.runAsync('PRAGMA user_version = 1;');
             socket.emit('query_result', { queryId, result: { affectedRows: 1, message: `Database '${dbNameMatch[1]}' created` } });
             addLog('success', `Base de datos creada: ${dbNameMatch[1]}`);
             return;
