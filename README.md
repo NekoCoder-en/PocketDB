@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="./banner.png" alt="PocketDB Mobile Banner" width="100%" />
+  <br /><br />
   <img src="https://raw.githubusercontent.com/expo/expo/main/docs/public/static/images/expo-logo.png" width="80" alt="Expo Logo"/>
   <h1>📱 PocketDB Mobile Node</h1>
   <p><strong>Transforma tu teléfono en un clúster de bases de datos relacionales en la nube.</strong></p>
