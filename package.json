@@ -4,9 +4,11 @@
   "main": "index.js",
   "dependencies": {
     "expo": "~57.0.12",
+    "expo-sqlite": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.86.2"
+    "react-native": "0.86.2",
+    "socket.io-client": "^4.8.3"
   },
   "scripts": {
     "start": "expo start",
@@ -14,5 +16,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-native": "^0.72.8",
+    "typescript": "^7.0.2"
+  }
 }
