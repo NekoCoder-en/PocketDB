@@ -16,7 +16,7 @@ interface LogEntry {
 type ConnectionStatus = 'DESCONECTADO' | 'CONECTANDO' | 'CONECTADO';
 
 export default function App() {
-  const [relayUrl, setRelayUrl] = useState<string>('http://192.168.18.216:3001');
+  const [relayUrl, setRelayUrl] = useState<string>(process.env.EXPO_PUBLIC_RELAY_URL || '');
   const [deviceId, setDeviceId] = useState<string>('');
   const [status, setStatus] = useState<ConnectionStatus>('DESCONECTADO');
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -138,7 +138,7 @@ export default function App() {
               style={styles.input}
               value={relayUrl}
               onChangeText={setRelayUrl}
-              placeholder="http://192.168.18.216:3001"
+              placeholder="https://tu-relay-server.fly.dev"
               placeholderTextColor="#5C6B89"
               autoCapitalize="none"
               keyboardType="url"
