@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
 
 interface LogEntry {
   id: string;
@@ -22,14 +23,15 @@ export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   
   const socketRef = useRef<Socket | null>(null);
-  const dbRef = useRef<SQLite.SQLiteDatabase | null>(null);
+  const dbsRef = useRef<Record<string, SQLite.SQLiteDatabase>>({});
+  const [activeDbName, setActiveDbName] = useState<string>('pocketdb_main.db');
   const scrollViewRef = useRef<ScrollView | null>(null);
 
   useEffect(() => {
     // Inicializar base de datos local
     async function initDB() {
       try {
-        dbRef.current = await SQLite.openDatabaseAsync('pocketdb.db');
+        dbsRef.current['pocketdb_main.db'] = await SQLite.openDatabaseAsync('pocketdb_main.db');
         addLog('info', 'Base de datos SQLite local inicializada.');
       } catch (e: any) {
         addLog('error', `Error al inicializar DB: ${e.message}`);
@@ -90,22 +92,80 @@ export default function App() {
       addLog('query', `Ejecutando: ${sql}`);
       
       try {
-        if (!dbRef.current) throw new Error("La BD no está lista.");
+        const upperSql = sql.trim().toUpperCase();
         
-        // Ejecutar query
-        let result: any;
-        if (sql.trim().toUpperCase().startsWith('SELECT')) {
-          result = await dbRef.current.getAllAsync(sql, args);
-        } else {
-          result = await dbRef.current.runAsync(sql, args);
+        // --- 1. SHOW DATABASES ---
+        if (upperSql === 'SHOW DATABASES;' || upperSql === 'SHOW DATABASES') {
+          const sqliteDir = `${FileSystem.documentDirectory}SQLite/`;
+          const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
+          
+          if (!dirInfo.exists) {
+            socket.emit('query_result', { queryId, result: [{ Database: 'pocketdb_main' }] });
+            return;
+          }
+          const files = await FileSystem.readDirectoryAsync(sqliteDir);
+          const databases = files.filter(f => f.endsWith('.db')).map(f => ({ Database: f.replace('.db', '') }));
+          socket.emit('query_result', { queryId, result: databases });
+          addLog('success', 'Bases de datos listadas.');
+          return;
         }
-        
-        // Responder al Relay
-        socket.emit('query_result', { queryId, result });
-        addLog('success', `Query respondido. Filas/Afectados: ${result.length || result.changes || 0}`);
-        
+
+        // --- 2. CREATE DATABASE ---
+        if (upperSql.startsWith('CREATE DATABASE ')) {
+          const dbNameMatch = sql.match(/CREATE\s+DATABASE\s+([a-zA-Z0-9_]+)/i);
+          if (dbNameMatch && dbNameMatch[1]) {
+            const dbName = `${dbNameMatch[1]}.db`;
+            dbsRef.current[dbName] = await SQLite.openDatabaseAsync(dbName);
+            socket.emit('query_result', { queryId, result: { affectedRows: 1, message: `Database '${dbNameMatch[1]}' created` } });
+            addLog('success', `Base de datos creada: ${dbNameMatch[1]}`);
+            return;
+          }
+        }
+
+        // --- 3. USE DATABASE ---
+        if (upperSql.startsWith('USE ')) {
+          const dbNameMatch = sql.match(/USE\s+([a-zA-Z0-9_]+)/i);
+          if (dbNameMatch && dbNameMatch[1]) {
+            const dbName = `${dbNameMatch[1]}.db`;
+            if (!dbsRef.current[dbName]) {
+              dbsRef.current[dbName] = await SQLite.openDatabaseAsync(dbName);
+            }
+            setActiveDbName(dbName);
+            socket.emit('query_result', { queryId, result: { affectedRows: 0, message: `Database changed to '${dbNameMatch[1]}'` } });
+            addLog('success', `Cambiado a BD: ${dbNameMatch[1]}`);
+            return;
+          }
+        }
+
+        // --- 4. CONSULTAS NORMALES ---
+        // Usar un valor local de activeDbName para evitar problemas de cierres de hooks antiguos
+        setActiveDbName(currentActive => {
+          (async () => {
+            if (!dbsRef.current[currentActive]) {
+              dbsRef.current[currentActive] = await SQLite.openDatabaseAsync(currentActive);
+            }
+            const db = dbsRef.current[currentActive];
+            
+            try {
+              let result: any;
+              if (upperSql.startsWith('SELECT') || upperSql.startsWith('PRAGMA')) {
+                result = await db.getAllAsync(sql, args);
+              } else {
+                result = await db.runAsync(sql, args);
+              }
+              
+              socket.emit('query_result', { queryId, result });
+              addLog('success', `Query OK en ${currentActive.replace('.db', '')}. Filas/Afectados: ${result?.length ?? result?.changes ?? 0}`);
+            } catch (err: any) {
+              addLog('error', `Error SQL en ${currentActive.replace('.db', '')}: ${err.message}`);
+              socket.emit('query_result', { queryId, error: err.message });
+            }
+          })();
+          return currentActive;
+        });
+
       } catch (error: any) {
-        addLog('error', `Error SQL: ${error.message}`);
+        addLog('error', `Error de parseo: ${error.message}`);
         socket.emit('query_result', { queryId, error: error.message });
       }
     });
@@ -129,7 +189,10 @@ export default function App() {
               <View style={[styles.statusDot, { backgroundColor: status === 'CONECTADO' ? '#00E676' : status === 'CONECTANDO' ? '#FFEA00' : '#FF1744' }]} />
               <Text style={styles.statusText}>{status}</Text>
             </View>
-            <Text style={styles.deviceLabel}>ID: <Text style={styles.deviceId}>{deviceId}</Text></Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.deviceLabel}>ID: <Text style={styles.deviceId}>{deviceId}</Text></Text>
+              <Text style={styles.activeDbLabel}>BD Activa: <Text style={styles.activeDbName}>{activeDbName.replace('.db', '')}</Text></Text>
+            </View>
           </View>
 
           <Text style={styles.label}>URL del Servidor Relay:</Text>
@@ -205,6 +268,8 @@ const styles = StyleSheet.create({
   statusText: { color: '#E2E8F0', fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   deviceLabel: { color: '#8A99B5', fontSize: 14 },
   deviceId: { color: '#00F2FE', fontWeight: '700', fontSize: 16, letterSpacing: 1 },
+  activeDbLabel: { color: '#8A99B5', fontSize: 11, marginTop: 4 },
+  activeDbName: { color: '#E2E8F0', fontWeight: 'bold' },
   label: { color: '#8A99B5', fontSize: 12, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
   inputContainer: { flexDirection: 'row', alignItems: 'center' },
   input: { flex: 1, backgroundColor: '#0B0F19', color: '#FFFFFF', height: 48, borderRadius: 8, paddingHorizontal: 16, fontSize: 14, borderWidth: 1, borderColor: '#242F4A', marginRight: 12 },
