@@ -19,6 +19,7 @@ type ConnectionStatus = 'DESCONECTADO' | 'CONECTANDO' | 'CONECTADO';
 export default function App() {
   const [relayUrl, setRelayUrl] = useState<string>(process.env.EXPO_PUBLIC_RELAY_URL || '');
   const [deviceId, setDeviceId] = useState<string>('');
+  const [apiKey, setApiKey] = useState<string>('');
   const [status, setStatus] = useState<ConnectionStatus>('DESCONECTADO');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   
@@ -39,8 +40,9 @@ export default function App() {
     }
     initDB();
 
-    // Generar un ID de dispositivo único y corto
+    // Generar un ID de dispositivo único y corto y una API Key segura
     setDeviceId(Math.random().toString(36).substring(2, 8).toUpperCase());
+    setApiKey(Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase());
 
     return () => {
       if (socketRef.current) socketRef.current.disconnect();
@@ -72,8 +74,8 @@ export default function App() {
     socket.on('connect', () => {
       setStatus('CONECTADO');
       addLog('success', 'Conexión exitosa con Relay.');
-      // Registramos este dispositivo en el relay
-      socket.emit('register_device', deviceId);
+      // Registramos este dispositivo en el relay con su API Key
+      socket.emit('register_device', { deviceId, apiKey });
     });
 
     socket.on('disconnect', () => {
@@ -194,6 +196,7 @@ export default function App() {
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={styles.deviceLabel}>ID: <Text style={styles.deviceId}>{deviceId}</Text></Text>
+              <Text style={styles.apiKeyLabel}>KEY: <Text style={styles.apiKeyValue}>{apiKey}</Text></Text>
               <Text style={styles.activeDbLabel}>BD Activa: <Text style={styles.activeDbName}>{activeDbName.replace('.db', '')}</Text></Text>
             </View>
           </View>
@@ -271,6 +274,8 @@ const styles = StyleSheet.create({
   statusText: { color: '#E2E8F0', fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   deviceLabel: { color: '#8A99B5', fontSize: 14 },
   deviceId: { color: '#00F2FE', fontWeight: '700', fontSize: 16, letterSpacing: 1 },
+  apiKeyLabel: { color: '#8A99B5', fontSize: 12, marginTop: 4 },
+  apiKeyValue: { color: '#FFEA00', fontWeight: '700', fontSize: 12, letterSpacing: 1 },
   activeDbLabel: { color: '#8A99B5', fontSize: 11, marginTop: 4 },
   activeDbName: { color: '#E2E8F0', fontWeight: 'bold' },
   label: { color: '#8A99B5', fontSize: 12, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
