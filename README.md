@@ -10,15 +10,27 @@
 <br />
 
 ## 🚀 ¿Qué es PocketDB?
-PocketDB Mobile Node es una aplicación construida con React Native (Expo) que levanta un motor **SQLite** local en tu dispositivo y se conecta a un servidor Relay en la nube vía **WebSockets**. Esto permite que cualquier desarrollador pueda enviar consultas SQL desde su computadora y ejecutarlas físicamente en el almacenamiento del teléfono, convirtiéndolo en un *Edge Node* gratuito.
+PocketDB Mobile Node es una aplicación construida con React Native que levanta un motor **SQLite** local en tu dispositivo y se conecta a un servidor Relay en la nube vía WebSockets. Esto permite que cualquier desarrollador pueda enviar consultas SQL desde su computadora y ejecutarlas físicamente en el almacenamiento del teléfono.
 
-## ✨ Características
-- **Interfaz Premium:** Diseño oscuro, moderno y optimizado para la experiencia del desarrollador.
-- **Túnel Inverso Integrado:** Sin configuraciones complejas de red, IPs estáticas o puertos abiertos.
-- **Terminal en Tiempo Real:** Visualiza las consultas SQL (`SELECT`, `INSERT`, `CREATE TABLE`) ejecutándose en vivo en la pantalla de tu celular.
-- **TypeScript:** Tipado estático para asegurar la estabilidad del motor.
+## 🌟 Dos Formas de Usar PocketDB
 
-## 🛠️ Instalación y Uso
+Este proyecto está diseñado con la flexibilidad en mente:
+
+### 1. La Vía Rápida (Uso Público)
+No necesitas programar nada. Pronto publicaremos el **APK oficial**. Solo tendrás que descargarlo, abrirlo y automáticamente se conectará a nuestro **Servidor Relay Público** (siempre encendido). Estarás listo para mandar consultas a tu teléfono en segundos.
+
+### 2. La Vía Privada (Self-Hosted / Open Source)
+¿Quieres control total por privacidad o modificar la interfaz de la app? 
+Al ser Open Source, puedes clonar este repositorio, modificar el diseño, y apuntar la aplicación a **tu propio servidor Relay privado**. Dentro de la app hay un campo para cambiar la URL del servidor fácilmente.
+
+## ✨ Características Principales
+- **Interfaz Premium:** Diseño oscuro, moderno y optimizado para desarrolladores.
+- **Túnel Inverso Integrado:** Sin IPs estáticas ni puertos abiertos.
+- **Terminal en Tiempo Real:** Visualiza las consultas SQL (`SELECT`, `INSERT`, `CREATE TABLE`) en vivo en la pantalla de tu celular.
+
+## 🛠️ Instalación para Desarrolladores (Self-Hosted)
+
+Si eliges la Vía Privada y quieres compilar la app tú mismo:
 
 1. **Clona el repositorio:**
    ```bash
@@ -26,23 +38,14 @@ PocketDB Mobile Node es una aplicación construida con React Native (Expo) que l
    cd PocketDB
    ```
 
-2. **Instala las dependencias:**
+2. **Instala dependencias e inicia:**
    ```bash
    npm install
-   ```
-
-3. **Inicia el entorno de desarrollo:**
-   ```bash
    npm start
    ```
 
-4. **Prueba en tu Teléfono:**
-   - Descarga **Expo Go** en tu Android o iOS.
-   - Escanea el código QR que aparece en tu terminal.
-   - ¡Listo! Configura la URL de tu Servidor Relay en la pantalla principal y presiona *Conectar*.
-
-## 📡 Integración con el Servidor Relay
-Esta aplicación requiere el [PocketDB Relay Server](https://github.com/NekoCoder-en/server-pocketDB) para funcionar. Asegúrate de tener tu Relay corriendo (ya sea localmente o desplegado en Fly.io) y pega la URL correspondiente en la app móvil.
+3. **Conexión:**
+   Asegúrate de clonar y levantar también el [PocketDB Relay Server](https://github.com/NekoCoder-en/server-pocketDB), y pegar la URL de tu servidor en la app móvil.
 
 ---
-*Hecho con ❤️ para desarrolladores que buscan herramientas ágiles.*
+*Construido para hacer el desarrollo móvil y edge computing más accesible para todos.*
